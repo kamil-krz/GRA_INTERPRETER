@@ -1,7 +1,9 @@
-import sys
+import sys, psutil, os
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import QRectF, QTimer, Qt
 from PyQt5.QtWidgets import *
 from Klasy import *
+
 
 from gui_nasze import Ui_Form
 
@@ -11,6 +13,7 @@ def exception_hook(exctype, value, traceback):
     sys.exit(1)
 sys.excepthook = exception_hook
 
+plansza_id=1
 
 class MyForm(QMainWindow, Ui_Form):
 
@@ -20,16 +23,45 @@ class MyForm(QMainWindow, Ui_Form):
         self.setupUi(self)
 
         self.scene = QGraphicsScene()
-        self.czolgi = czolg(xy=(10, 10))
+        self.czolgi = czolg(xy=(12, 12))
+        self.pociski = {}
+        self.kafelki = {}
+        file = open('plansza'+str(plansza_id)+'.txt')
+
+        for i, line in enumerate(file):
+            for j in range(0,20):
+                if line[j] == ' ':
+                    self.kafelki[(j,i)] = kafelek(xy=(j,i),typ = 'chodnik')
+                if line[j] == '#':
+                    self.kafelki[(j,i)] = kafelek(xy=(j,i), typ='sciana_nzn')
+                if line[j] == '*':
+                    self.kafelki[(j,i)] = kafelek(xy=(j,i), typ='sciana_zn')
+
+        self.timer = QTimer(self)
 
         self.plansza.setScene(self.scene)
+
+        for xy in self.kafelki.keys():
+                self.scene.addItem(self.kafelki[xy])
         self.scene.addItem(self.czolgi)
 
+
+        self.timer.timeout.connect(self.latanie)
         self.b_start.clicked.connect(self.start)
 
 
     def start(self):
-        self.czolgi.goto((12,12))
+        self.timer.start(10)
+        self.czolgi.run(self.kafelki, self.scene)
+
+    def latanie(self):
+        for i in self.scene.items():
+            if type(i) == pocisk:
+                i.lot()
+
+    # def closeEvent(self, event):
+    #     pass
+
 
 
 
@@ -38,4 +70,6 @@ if __name__ == "__main__":
     window = MyForm()
     window.show()
     sys.exit(app.exec_())
-    sys.exit(app.exec_())
+
+
+
