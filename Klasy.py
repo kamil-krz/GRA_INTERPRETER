@@ -89,7 +89,7 @@ class czolg(QGraphicsItem):
 
         p = pocisk(xy=xy,dir = self.dir)
         self.scene.addItem(p)
-        p.lot()
+        QtTest.QTest.qWait(500)
 
 
 
