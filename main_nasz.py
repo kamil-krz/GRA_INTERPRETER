@@ -23,7 +23,8 @@ class MyForm(QMainWindow, Ui_Form):
         self.setupUi(self)
 
         self.scene = QGraphicsScene()
-        self.czolgi = czolg(xy=(12, 12))
+        self.czolgi = {czolg(xy=(12,8)),czolg(xy=(5,5)),czolg(xy=(3,3)),czolg(xy=(10,17))}
+        self.player = player(xy=(12, 12), colour='cyan')
         self.pociski = {}
         self.kafelki = {}
         file = open('plansza'+str(plansza_id)+'.txt')
@@ -43,7 +44,9 @@ class MyForm(QMainWindow, Ui_Form):
 
         for xy in self.kafelki.keys():
                 self.scene.addItem(self.kafelki[xy])
-        self.scene.addItem(self.czolgi)
+        self.scene.addItem(self.player)
+        for i in self.czolgi:
+            self.scene.addItem(i)
 
 
         self.timer.timeout.connect(self.latanie)
@@ -52,7 +55,7 @@ class MyForm(QMainWindow, Ui_Form):
 
     def start(self):
         self.timer.start(10)
-        self.czolgi.run(self.kafelki, self.scene)
+        self.player.run(self.kafelki, self.scene)
 
     def latanie(self):
         for i in self.scene.items():
