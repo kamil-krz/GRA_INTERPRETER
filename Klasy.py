@@ -1,16 +1,22 @@
 from PyQt5.QtCore import (QRectF, Qt)
-from PyQt5.QtGui import (QBrush, QColor, QImage)
+from PyQt5.QtGui import QBrush, QColor, QImage, QBrush, QPixmap, QTransform
+#from PyQt5.QtGui.__init__ import QTransform
 from PyQt5.QtWidgets import QGraphicsItem
 from PyQt5 import QtTest
+import sys
+from sys import exc_info
+import traceback
+import time
+
 
 
 class czolg(QGraphicsItem):
-    def __init__(self, xy=(-1, -1), dir=180, colour='green', icon='graphics/player.png'):
+    def __init__(self, xy=(-1, -1), dir=180, obrazki = None):
         QGraphicsItem.__init__(self)
-        self.colour = colour
-        self.icon = icon
         self.xy = xy
         self.dir = dir
+        self.obrazek = obrazki['czolg']
+
 
     def boundingRect(self):
         return QRectF(0, 0, 500, 500)
@@ -18,19 +24,18 @@ class czolg(QGraphicsItem):
 
     def paint(self, painter,option, widget):
         x, y = self.xy
-        colour = QBrush(QColor(self.colour))
-        painter.setBrush(colour)
-        painter.drawRect(x*25+2, y*25+2, 21, 21)
-        colour = QBrush(QColor('black'))
-        painter.setBrush(colour)
+        rect = QRectF(x * 25, y * 25, 25, 25)
         if self.dir == 0:
-            painter.drawRect(x * 25+10, y * 25 + 10, 15, 5)
+            obrot = QTransform().rotate(90)
+            painter.drawImage(rect, self.obrazek.transformed(obrot))
         if self.dir == 90:
-            painter.drawRect(x * 25 + 10, y * 25, 5, 15)
+            painter.drawImage(rect, self.obrazek)
         if self.dir == 180:
-            painter.drawRect(x * 25 , y * 25 + 10, 15, 5)
+            obrot = QTransform().rotate(-90)
+            painter.drawImage(rect, self.obrazek.transformed(obrot))
         if self.dir == 270:
-            painter.drawRect(x * 25 + 10, y * 25 + 10, 5, 15)
+            obrot = QTransform().rotate(180)
+            painter.drawImage(rect, self.obrazek.transformed(obrot))
 
     def obrot_prawo(self):
         self.dir = self.dir - 90
@@ -102,25 +107,27 @@ class czolg(QGraphicsItem):
 
 
 class kafelek(QGraphicsItem):
-    def __init__(self, xy=(-1, -1), typ = 'chodnik'):
+    def __init__(self, xy=(-1, -1), typ = 'chodnik', obrazki = None):
         QGraphicsItem.__init__(self)
         self.typ = typ
         self.xy = xy
+        self.obrazki = obrazki
 
     def boundingRect(self):
         return QRectF(0, 0, 500, 500)
 
     def paint(self, painter, option, widget):
         x, y = self.xy
+        rect = QRectF(x * 25, y * 25, 25, 25)
         if self.typ == 'chodnik':
-            self.colour = 'white'
+            colour = QBrush(QColor('black'))
+            painter.setBrush(colour)
+            painter.drawRect(x * 25, y * 25, 25, 25)
         elif self.typ == 'sciana_zn':
-            self.colour = 'gray'
+            painter.drawImage(rect, self.obrazki['sciana_zniszczalna'])
         elif self.typ == 'sciana_nzn':
-            self.colour = 'black'
-        colour = QBrush(QColor(self.colour))
-        painter.setBrush(colour)
-        painter.drawRect(x * 25 , y * 25 , 25, 25)
+            painter.drawImage(rect, self.obrazki['sciana_niezniszczalna'])
+
 
 
 class pocisk(QGraphicsItem):
@@ -167,18 +174,37 @@ class pocisk(QGraphicsItem):
         self.update()
 
 class player(czolg):
+    def __init__(self, xy=(-1, -1), dir=180, obrazki = None):
+        QGraphicsItem.__init__(self)
+        self.xy = xy
+        self.dir = dir
+        self.obrazek = obrazki['player']
 
-    def run(self, kafelki, scene):
+
+    def run(self, kafelki, scene, kod):
         self.kafelki = kafelki
         self.scene = scene
+        strzal = self.strzal
+        jedz_tyl = self.jedz_tyl
+        jedz_prosto = self.jedz_prosto
+        obrot_prawo = self.obrot_prawo
+        obrot_lewo = self.obrot_lewo
         ##########################################################################
         ##########################################################################
-        self.obrot_prawo()
-        self.jedz_prosto(6)
-        self.strzal()
-        self.jedz_prosto(2)
-
-
+        if 'class' in kod:
+            return ['Nie wolno definować nowych klas']
+        elif 'import' in kod:
+            return ['Nie wolno importować']
+        try:
+            exec(kod)
+            return ['Wykonano kod']
+        except:
+            formatted_lines = traceback.format_exc().splitlines()
+            formatted_lines[3]=  formatted_lines[3].split(',')[1].lstrip() + ":"
+            return formatted_lines[3:]
+            # except Exception as err:
+            #     print(type(err))
+            #     print(err)
 
 
 

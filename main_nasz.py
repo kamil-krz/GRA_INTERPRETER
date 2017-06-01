@@ -1,5 +1,6 @@
 import sys, psutil, os
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtGui import QImage
 from PyQt5.QtCore import QRectF, QTimer, Qt
 from PyQt5.QtWidgets import *
 from Klasy import *
@@ -21,10 +22,10 @@ class MyForm(QMainWindow, Ui_Form):
         QMainWindow.__init__(self)
         Ui_Form.__init__(self)
         self.setupUi(self)
-
+        self.obrazki = {'player': QImage("graphics/player.jpg"), 'czolg': QImage("graphics/czolg.jpg"), 'sciana_zniszczalna': QImage("graphics/sciana_zniszczalna.jpg"), 'sciana_niezniszczalna': QImage("graphics/sciana_niezniszczalna.jpg"), }
         self.scene = QGraphicsScene()
-        self.czolgi = {czolg(xy=(12,8)),czolg(xy=(5,5)),czolg(xy=(3,3)),czolg(xy=(10,17))}
-        self.player = player(xy=(12, 12), colour='cyan')
+        self.czolgi = []
+        self.player = None
         self.pociski = {}
         self.kafelki = {}
         file = open('plansza'+str(plansza_id)+'.txt')
@@ -32,11 +33,29 @@ class MyForm(QMainWindow, Ui_Form):
         for i, line in enumerate(file):
             for j in range(0,20):
                 if line[j] == ' ':
-                    self.kafelki[(j,i)] = kafelek(xy=(j,i),typ = 'chodnik')
+                    self.kafelki[(j,i)] = kafelek(xy=(j,i),typ = 'chodnik',obrazki = self.obrazki)
                 if line[j] == '#':
-                    self.kafelki[(j,i)] = kafelek(xy=(j,i), typ='sciana_nzn')
+                    self.kafelki[(j,i)] = kafelek(xy=(j,i), typ='sciana_nzn',obrazki = self.obrazki)
                 if line[j] == '*':
-                    self.kafelki[(j,i)] = kafelek(xy=(j,i), typ='sciana_zn')
+                    self.kafelki[(j,i)] = kafelek(xy=(j,i), typ='sciana_zn',obrazki = self.obrazki)
+                if line[j] == 'P':
+                    self.player = player(xy=(j, i), obrazki = self.obrazki)
+                    self.kafelki[(j, i)] = kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki)
+                if line[j] == '<':
+                    self.czolgi.append(czolg(xy=(j, i), dir = 180, obrazki = self.obrazki))
+                    self.kafelki[(j, i)] = kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki)
+                if line[j] == '>':
+                    self.czolgi.append(czolg(xy=(j, i), dir=0, obrazki=self.obrazki))
+                    self.kafelki[(j, i)] = kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki)
+                if line[j] == '^':
+                    self.czolgi.append(czolg(xy=(j, i), dir=90, obrazki=self.obrazki))
+                    self.kafelki[(j, i)] = kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki)
+                if line[j] == 'v':
+                    self.czolgi.append(czolg(xy=(j, i), dir=270, obrazki=self.obrazki))
+                    self.kafelki[(j, i)] = kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki)
+
+
+
 
         self.timer = QTimer(self)
 
@@ -51,11 +70,16 @@ class MyForm(QMainWindow, Ui_Form):
 
         self.timer.timeout.connect(self.latanie)
         self.b_start.clicked.connect(self.start)
+        self.b_reset.clicked.connect(self.reset)
 
 
     def start(self):
         self.timer.start(10)
-        self.player.run(self.kafelki, self.scene)
+        kod = self.textBox.toPlainText()
+        for i in self.player.run(self.kafelki, self.scene, kod):
+            print(i)
+    def reset(self):
+        self.reset()
 
     def latanie(self):
         for i in self.scene.items():
