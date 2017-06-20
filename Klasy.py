@@ -295,7 +295,7 @@ class player(czolg):
         self.scene = scene
 
 
-    def run(self, kod,e,e_krokowa):
+    def run(self,result, kod,e,e_krokowa):
         self.e=e
         self.e_krokowa=e_krokowa
         self.kod2=''
