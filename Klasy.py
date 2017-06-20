@@ -109,6 +109,8 @@ class czolg(QGraphicsItem):
                             return (i, k.typ)
                     elif type(k) == czolg or type(k) == player:
                         return (i, 'czolg')
+                elif int(k.xy[0]/25)==xy[0] and int(k.xy[1]/25)==xy[1]:
+                    return (i,'pocisk')
 
     def jedz(self, dist=1):
         for i in range(abs(dist)):
@@ -177,6 +179,19 @@ class czolg(QGraphicsItem):
             while(True):
                 if(self.hp<=0):
                     return 0
+                if self.radar('lewo')[1]=='pocisk':
+                    self.jedz()
+                    continue
+                elif self.radar('prawo')[1]=='pocisk':
+                    self.jedz()
+                    continue
+                elif self.radar('prosto')[1]=='pocisk':
+                    self.obrot_lewo()
+                    continue
+                elif self.radar('tyl')[1]=='pocisk':
+                    self.obrot_lewo()
+                    continue
+
                 move=random.randint(1, 15)
                 if move<5 and self.radar()[0]>1:
                     self.jedz()
@@ -192,8 +207,14 @@ class czolg(QGraphicsItem):
             while(True):
                 if (self.hp <= 0):
                     return 0
-                self.jedz()
-                self.strzal()
+                if self.radar()[0]>1:
+                    self.jedz()
+                else:
+                    self.obrot_lewo()
+                    self.obrot_lewo()
+                if self.radar()[1] =='czolg' and random.random()<0.8:
+                    self.strzal()
+
 
 
 

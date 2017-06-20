@@ -59,6 +59,8 @@ class MyForm(QMainWindow, Ui_Form):
     def laduj_plansze(self,nazwa):
         file = open(nazwa)
         for i, line in enumerate(file):
+            if i>=20:
+                break
             for j in range(0, 20):
                 if line[j] == ' ':
                     self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
@@ -71,10 +73,10 @@ class MyForm(QMainWindow, Ui_Form):
                     self.scene.addItem(self.player)
                     self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
                 if line[j] == '<':
-                    self.scene.addItem(czolg(xy=(j, i), dir=180, obrazki=self.obrazki, type='prosto', scene=self.scene))
+                    self.scene.addItem(czolg(xy=(j, i), dir=180, obrazki=self.obrazki, type='random', scene=self.scene))
                     self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
                 if line[j] == '>':
-                    self.scene.addItem(czolg(xy=(j, i), dir=0, obrazki=self.obrazki, type='prosto', scene=self.scene))
+                    self.scene.addItem(czolg(xy=(j, i), dir=0, obrazki=self.obrazki, type='random', scene=self.scene))
                     self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
                 if line[j] == '^':
                     self.scene.addItem(czolg(xy=(j, i), dir=90, obrazki=self.obrazki, type='random', scene=self.scene))
