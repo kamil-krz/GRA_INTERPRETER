@@ -357,21 +357,21 @@ class player(czolg):
 
 
             return
-        except SyntaxError as e:
-
-            self.add_result('Error on line: {}'.format(math.ceil(e.lineno/3)), type(e).__name__)
-            return
-        except Exception as e:
+        except SyntaxError as err:
+            error_class = err.__class__.__name__
+            detail = err.args[0]
+            line_number = err.lineno
+        except Exception as err:
+            error_class = err.__class__.__name__
+            detail = err.args[0]
             cl, exc, tb = sys.exc_info()
-            self.add_result('Error on line: {}'.format(math.ceil(traceback.extract_tb(tb)[-1][1]/3)), type(e).__name__, e)
-            # formatted_lines = traceback.format_exc().splitlines()
-            # formatted_lines[3]=  formatted_lines[3].split(',')[1].lstrip() + ":"
-            #
-            # self.add_result(formatted_lines[3:])
+            line_number = traceback.extract_tb(tb)[-1][1]
+        else:
             return
-            # except Exception as err:
-            #     print(type(err))
-            #     print(err)
+        raise self.add_result("%s at line %d of %s: %s" % (error_class, math.ceil(line_number/3), 'user code', detail))
+
+        return
+
 
 
 class gracz:
