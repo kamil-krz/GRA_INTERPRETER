@@ -57,24 +57,6 @@ class czolg(QGraphicsItem):
             self.dir = self.dir - 360
         self.e.clear()
 
-    # def radar(self):
-    #     for i in range(1,20):
-    #         if self.dir == 0:
-    #             xy = (self.xy[0] + i, self.xy[1])
-    #         elif self.dir == 180:
-    #             xy = (self.xy[0] - i, self.xy[1])
-    #         elif self.dir == 90:
-    #             xy = (self.xy[0], self.xy[1] - i)
-    #         elif self.dir == 270:
-    #             xy = (self.xy[0], self.xy[1] + i)
-    #         for k in self.scene.items():
-    #             if k.xy==xy :
-    #                 if type(k)==kafelek:
-    #                     if k.typ!='chodnik':
-    #                         return (i,k.typ)
-    #                 elif type(k)==czolg or type(k)==player:
-    #                     return (i,'czolg')
-
     def radar(self,dir2='przod'):
         if(dir2=='lewo'):
             dir2=self.dir+90
@@ -304,6 +286,7 @@ class pocisk(QGraphicsItem):
 class player(czolg):
     def __init__(self, xy=(-1, -1), dir=180, obrazki = None,delay=700,scene=None):
         QGraphicsItem.__init__(self)
+        self.licznik = 0
         self.xy = xy
         self.dir = dir
         self.obrazek = obrazki['player']
@@ -332,11 +315,11 @@ class player(czolg):
                 else:
                     if a.isalnum() or a=='_' or  a in '()-._,<>[]{};':
                         self.kod2 += wciecia + 'self.licznik=' + str(idx) + '\n'
-                        self.kod2 += wciecia + 'self.e_krokowa.wait()\n' + wciecia + 'self.e_krokowa.clear()' + '\n'
+                        self.kod2 += wciecia + 'self.e_krokowa.wait()\n' #+ wciecia + 'self.e_krokowa.clear()' + '\n'
                         self.kod2 += l + '\n'
                     break
             if wciecia==l:
-                self.kod2 += ' \n \n \n \n'
+                self.kod2 += ' \n \n \n'
 
 
         print(self.kod2)

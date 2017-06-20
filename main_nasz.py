@@ -35,7 +35,8 @@ class MyForm(QMainWindow, Ui_Form):
         self.scene.setItemIndexMethod(QGraphicsScene.NoIndex)
 
 
-        self.MPM=120        #moves per minute
+        self.MPM=10        #moves per minute
+
         self.threads_list = []
         self.player=None
         self.player_thread=None
@@ -53,7 +54,9 @@ class MyForm(QMainWindow, Ui_Form):
         self.horizontalSlider.valueChanged.connect(self.suwak)
         self.combo_plansze.currentIndexChanged.connect(self.reset)
         self.b_help.clicked.connect(self.help)
+        self.b_pause.clicked.connect(self.pauza)
 
+        self.suwak()
         self.laduj_plansze("maps/"+str(self.combo_plansze.currentText()) + ".dat")
 
     def laduj_plansze(self,nazwa):
@@ -94,23 +97,35 @@ class MyForm(QMainWindow, Ui_Form):
     def action(self):
         self.ActionEvent.set()
         self.l_hp.setText("HP:" + str(self.player.hp))
+        for j in range(0, len(self.textBox.toPlainText().splitlines())):
+            if j == self.player.licznik:
+                format = QTextBlockFormat()
+                format.setBackground(Qt.yellow)
+            else:
+                format = QTextBlockFormat()
+                format.setBackground(Qt.white)
+            self.setLineFormat(j, format)
+        if self.player.hp <= 0:
+            for t in self.threads_list:
+                if t.getName() == 'player_thread':
+                    if t.isAlive():
+                        t.raiseExc(Exception)
+                        time.sleep(0.1)
 
 
     def start(self):
-        self.timer.start(int(60*1000/self.MPM/20))
+        self.suwak()
+        self.timer.start(int(60*1000/self.MPM/50))
         self.timer_action.start(int(60*1000/self.MPM))
         self.krokowaEvent.set()
         kod = self.textBox.toPlainText()
         for idx,item in enumerate(self.scene.items()):
-            if type(item)==player:
+            if type(item)==player and (self.player_thread == None or not self.player_thread.isAlive()):
                 self.player_thread = ThreadWithExc(name='player_thread',
                      target=item.run,
                      args=(kod, self.ActionEvent, self.krokowaEvent,))
 
-
                 self.threads_list.append(self.player_thread)
-                # for i in self.player.run( kod):
-                #     print(i)
             elif type(item)==czolg:
                 t = ThreadWithExc(name='czolg_'+str(idx),
                                      target=item.go_AI,
@@ -134,7 +149,7 @@ class MyForm(QMainWindow, Ui_Form):
 
 
 
-        #DZIALAJACY RESET
+       # DZIALAJACY RESET
         for t in self.threads_list:
             if t.isAlive():
                 t.raiseExc(Exception)
@@ -145,42 +160,25 @@ class MyForm(QMainWindow, Ui_Form):
         self.scene.clear()
         self.laduj_plansze("maps/"+str(self.combo_plansze.currentText()) + ".dat")
 
+    def pauza(self):
+        for t in self.threads_list:
+            if t.isAlive() and t != self.player_thread:
+                t.raiseExc(Exception)
+                time.sleep(0.1)
+        self.threads_list=[]
+        self.timer_action.stop()
+        self.krokowaEvent.clear()
+        time.sleep(int(60*1000/self.MPM/20)/100)
+        self.timer.stop()
+        self.b_start.setEnabled(True)
+        self.b_pause.setEnabled(False)
 
 
-
-        # for t in self.threads_list:
-        #     if t.isAlive():
-        #         t.raiseExc(Exception)
-        #         time.sleep(0.1)
-        # self.threads_list=[]
-        # self.timer.stop()
-        # self.timer_action.stop()
-
-
-
-        # self.scene.addItem(kafelek())
-        pass
 
     def latanie(self):
         for i in self.scene.items():
             if type(i) == pocisk:
                 i.lot()
-            elif type(i)==player:
-
-                for j in range(0,len(self.textBox.toPlainText().splitlines())):
-                    if j == i.licznik:
-                        format = QTextBlockFormat()
-                        format.setBackground(Qt.yellow)
-                    else:
-                        format = QTextBlockFormat()
-                        format.setBackground(Qt.white)
-                    self.setLineFormat(j,format)
-                if i.hp<=0:
-                    for t in self.threads_list:
-                        if t.getName()=='player_thread':
-                            if t.isAlive():
-                                t.raiseExc(Exception)
-                                time.sleep(0.1)
 
         # self.scene.addItem(pocisk())
         self.scene.update()
@@ -193,7 +191,7 @@ class MyForm(QMainWindow, Ui_Form):
     def suwak(self):
         self.MPM = self.horizontalSlider.value()
         self.l_mpm.setText(str(self.horizontalSlider.value()))
-        self.timer.setInterval(int(60*1000/self.MPM/20))
+        self.timer.setInterval(int(60*1000/self.MPM/50))
         self.timer_action.setInterval(int(60*1000/self.MPM))
 
 
