@@ -88,6 +88,9 @@
    </property>
   </widget>
   <widget class="QPushButton" name="b_pause">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>580</x>

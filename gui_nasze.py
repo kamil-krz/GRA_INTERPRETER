@@ -32,6 +32,7 @@ class Ui_Form(object):
         self.combo_plansze.setGeometry(QtCore.QRect(30, 610, 101, 21))
         self.combo_plansze.setObjectName("combo_plansze")
         self.b_pause = QtWidgets.QPushButton(Form)
+        self.b_pause.setEnabled(False)
         self.b_pause.setGeometry(QtCore.QRect(580, 20, 221, 51))
         self.b_pause.setObjectName("b_pause")
         self.textBrowser = QtWidgets.QTextBrowser(Form)

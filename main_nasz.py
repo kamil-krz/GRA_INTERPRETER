@@ -1,12 +1,13 @@
 import threading
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtGui import QImage
+from PyQt5.QtGui import QImage, QTextBlockFormat, QTextCursor
 from PyQt5.QtCore import QRectF, QTimer, Qt
 from PyQt5.QtWidgets import *
 from Klasy import *
 from ThreadWithExc import *
 from gui_nasze import Ui_Form
+import os
 
 
 
@@ -24,6 +25,12 @@ class MyForm(QMainWindow, Ui_Form):
         Ui_Form.__init__(self)
         self.setupUi(self)
         self.obrazki = {'player': QImage("graphics/player.jpg"), 'czolg': QImage("graphics/czolg.jpg"), 'sciana_zniszczalna': QImage("graphics/sciana_zniszczalna.jpg"), 'sciana_niezniszczalna': QImage("graphics/sciana_niezniszczalna.jpg"), }
+
+        for root, dirs, files in os.walk('maps'):
+            for i in files:
+                if ".dat" in i:
+                    i = i.replace(".dat","")
+                    self.combo_plansze.addItem(i)
         self.scene = QGraphicsScene()
         self.scene.setItemIndexMethod(QGraphicsScene.NoIndex)
 
@@ -44,8 +51,10 @@ class MyForm(QMainWindow, Ui_Form):
         self.b_start.clicked.connect(self.start)
         self.b_reset.clicked.connect(self.reset)
         self.horizontalSlider.valueChanged.connect(self.suwak)
+        self.combo_plansze.currentIndexChanged.connect(self.reset)
+        self.b_help.clicked.connect(self.help)
 
-        self.laduj_plansze('plansza1.dat')
+        self.laduj_plansze("maps/"+str(self.combo_plansze.currentText()) + ".dat")
 
     def laduj_plansze(self,nazwa):
         file = open(nazwa)
@@ -82,6 +91,7 @@ class MyForm(QMainWindow, Ui_Form):
 
     def action(self):
         self.ActionEvent.set()
+        self.l_hp.setText("HP:" + str(self.player.hp))
 
 
     def start(self):
@@ -93,7 +103,7 @@ class MyForm(QMainWindow, Ui_Form):
             if type(item)==player:
                 self.player_thread = ThreadWithExc(name='player_thread',
                      target=item.run,
-                     args=(kod,self.ActionEvent,self.krokowaEvent,))
+                     args=(kod, self.ActionEvent, self.krokowaEvent,))
 
 
                 self.threads_list.append(self.player_thread)
@@ -104,7 +114,9 @@ class MyForm(QMainWindow, Ui_Form):
                                      target=item.go_AI,
                                      args=(self.ActionEvent,))
                 self.threads_list.append(t)
-
+        self.b_pause.setEnabled(True)
+        self.combo_plansze.setEnabled(False)
+        self.b_start.setEnabled(False)
 
 
         for t in self.threads_list:
@@ -113,7 +125,9 @@ class MyForm(QMainWindow, Ui_Form):
 
 
     def reset(self):
-
+        self.b_pause.setEnabled(False)
+        self.b_start.setEnabled(True)
+        self.combo_plansze.setEnabled(True)
        # self.krokowaEvent.set()
 
 
@@ -127,7 +141,7 @@ class MyForm(QMainWindow, Ui_Form):
         self.timer.stop()
         self.timer_action.stop()
         self.scene.clear()
-        self.laduj_plansze('plansza1.txt')
+        self.laduj_plansze("maps/"+str(self.combo_plansze.currentText()) + ".dat")
 
 
 
@@ -150,7 +164,15 @@ class MyForm(QMainWindow, Ui_Form):
             if type(i) == pocisk:
                 i.lot()
             elif type(i)==player:
-                print(i.licznik)
+
+                for j in range(0,len(self.textBox.toPlainText().splitlines())):
+                    if j == i.licznik:
+                        format = QTextBlockFormat()
+                        format.setBackground(Qt.yellow)
+                    else:
+                        format = QTextBlockFormat()
+                        format.setBackground(Qt.white)
+                    self.setLineFormat(j,format)
                 if i.hp<=0:
                     for t in self.threads_list:
                         if t.getName()=='player_thread':
@@ -161,6 +183,11 @@ class MyForm(QMainWindow, Ui_Form):
         # self.scene.addItem(pocisk())
         self.scene.update()
 
+    def setLineFormat(self, lineNumber, format):
+        cursor = QTextCursor(self.textBox.document().findBlockByNumber(lineNumber))
+        cursor.setBlockFormat(format)
+
+
     def suwak(self):
         self.MPM = self.horizontalSlider.value()
         self.l_mpm.setText(str(self.horizontalSlider.value()))
@@ -168,6 +195,25 @@ class MyForm(QMainWindow, Ui_Form):
         self.timer_action.setInterval(int(60*1000/self.MPM))
 
 
+    def help(self):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+
+        msg.setText("Dostępne polecenia klasy gracz: ")
+        msg.setInformativeText("gracz.jedz(liczba_pol) - jazda o liczbę pol - domyślnie +1 \n \n"
+                               "gracz.obrot_prawo() - obrot zgodnie z ruchem wskazowek zegara \n \n"
+                               "gracz.obrot_lewo() - obrot przeciwnie do ruchu wskazowek zegara \n \n"
+                               "gracz.strzal() - wystrzelenie pocisku \n \n"
+                               "gracz.radar(kierunek) - skanowanie w okreslonym kierunku - domyślnie przód \n \n"
+                               "Radar zwraca (odleglosc, typ_przeszkody) \n"
+                               "Dostępne typy przeszkód: \n"
+                               "sciana_nzn - ściana nieziszczalna \n"
+                               "sciana_zn - ściana zniszczalna \n"
+                               "czolg - przeciwnik \n")
+        msg.setWindowTitle("HELP")
+        msg.setStandardButtons(QMessageBox.Close)
+
+        retval = msg.exec_()
 
 
 
