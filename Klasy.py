@@ -1,3 +1,4 @@
+import math
 from PyQt5.QtCore import (QRectF, Qt)
 from PyQt5.QtGui import QBrush, QColor, QImage, QBrush, QPixmap, QTransform
 #from PyQt5.QtGui.__init__ import QTransform
@@ -293,9 +294,17 @@ class player(czolg):
         self.delay=delay
         self.hp=3
         self.scene = scene
+        self.result=''
+
+    def add_result(self,*string):
+        self.result += '\n'
+        for s in string:
+            self.result+=str(s)
+            self.result+=' '
 
 
-    def run(self,result, kod,e,e_krokowa):
+    def run(self, kod,e,e_krokowa):
+        self.add_result('Uruchomiono kod')
         self.e=e
         self.e_krokowa=e_krokowa
         self.kod2=''
@@ -306,6 +315,7 @@ class player(czolg):
         gracz.obrot_lewo=self.obrot_lewo
         gracz.strzal=self.strzal
         gracz.radar=self.radar
+
 
         for idx,l in enumerate(kod.splitlines()):
             wciecia=''
@@ -322,7 +332,7 @@ class player(czolg):
                 self.kod2 += ' \n \n \n'
 
 
-        print(self.kod2)
+        # print(self.kod2)
 
         # czolg.strzal = self.strzal
         #
@@ -331,20 +341,34 @@ class player(czolg):
         # czolg.obrot_lewo = self.obrot_lewo
         ##########################################################################
         ##########################################################################
-        if 'class' in kod:
-            return ['Nie wolno definować nowych klas']
-        elif 'import' in kod:
-            return ['Nie wolno importować']
-        elif 'self' in kod:
-            return ['Użyj klasy gracz zamiast self']
+        if 'class ' in kod:
+            self.add_result('\nNie wolno definować nowych klas')
+            return
+        elif 'import ' in kod:
+            self.add_result('\nNie wolno importować')
+            return
+        elif 'self.' in kod:
+            self.add_result('\nUżyj klasy gracz zamiast self')
+            return
         try:
+            print=self.add_result
             exec(self.kod2)
-            return ['Wykonano kod']
-        except:
-            formatted_lines = traceback.format_exc().splitlines()
-            formatted_lines[3]=  formatted_lines[3].split(',')[1].lstrip() + ":"
-            print (formatted_lines[3:])
-            return formatted_lines[3:]
+            self.add_result('\nWykonano kod')
+
+
+            return
+        except SyntaxError as e:
+
+            self.add_result('Error on line: {}'.format(math.ceil(e.lineno/3)), type(e).__name__)
+            return
+        except Exception as e:
+            cl, exc, tb = sys.exc_info()
+            self.add_result('Error on line: {}'.format(math.ceil(traceback.extract_tb(tb)[-1][1]/3)), type(e).__name__, e)
+            # formatted_lines = traceback.format_exc().splitlines()
+            # formatted_lines[3]=  formatted_lines[3].split(',')[1].lstrip() + ":"
+            #
+            # self.add_result(formatted_lines[3:])
+            return
             # except Exception as err:
             #     print(type(err))
             #     print(err)
