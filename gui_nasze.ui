@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
+ <author>KGK</author>
  <class>Form</class>
  <widget class="QWidget" name="Form">
   <property name="geometry">
@@ -38,7 +39,7 @@
     <enum>QFrame::NoFrame</enum>
    </property>
   </widget>
-  <widget class="QPlainTextEdit" name="textBox">
+  <widget class="CodeEditor" name="textBox">
    <property name="geometry">
     <rect>
      <x>560</x>
@@ -47,8 +48,51 @@
      <height>501</height>
     </rect>
    </property>
+   <property name="palette">
+    <palette>
+     <active>
+      <colorrole role="Base">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>255</red>
+         <green>255</green>
+         <blue>255</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </active>
+     <inactive>
+      <colorrole role="Base">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>255</red>
+         <green>255</green>
+         <blue>255</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </inactive>
+     <disabled>
+      <colorrole role="Base">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>255</red>
+         <green>255</green>
+         <blue>255</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </disabled>
+    </palette>
+   </property>
+   <property name="cursor" stdset="0">
+    <cursorShape>IBeamCursor</cursorShape>
+   </property>
    <property name="lineWrapMode">
     <enum>QPlainTextEdit::NoWrap</enum>
+   </property>
+   <property name="tabStopWidth">
+    <number>40</number>
    </property>
   </widget>
   <widget class="QPushButton" name="b_reset">
@@ -103,7 +147,7 @@
     <string>Pause</string>
    </property>
   </widget>
-  <widget class="QTextBrowser" name="textBrowser">
+  <widget class="QTextBrowser" name="konsola">
    <property name="geometry">
     <rect>
      <x>560</x>
@@ -121,6 +165,9 @@
      <width>321</width>
      <height>22</height>
     </rect>
+   </property>
+   <property name="cursor">
+    <cursorShape>SizeHorCursor</cursorShape>
    </property>
    <property name="minimum">
     <number>20</number>
@@ -191,6 +238,13 @@
    </property>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CodeEditor</class>
+   <extends>QPlainTextEdit</extends>
+   <header location="global">Klasy_uzytkowe</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

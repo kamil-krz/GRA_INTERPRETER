@@ -1,13 +1,14 @@
 import threading
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtGui import QImage, QTextBlockFormat, QTextCursor
-from PyQt5.QtCore import QRectF, QTimer, Qt
+from PyQt5.QtGui import QImage, QTextBlockFormat, QTextCursor, QTextFormat, QPainter
+from PyQt5.QtCore import QRectF, QTimer, Qt, QRect
 from PyQt5.QtWidgets import *
 from Klasy import *
 from ThreadWithExc import *
 from gui_nasze import Ui_Form
 import os
+import Klasy_uzytkowe
 
 
 
@@ -38,9 +39,9 @@ class MyForm(QMainWindow, Ui_Form):
         self.MPM=10        #moves per minute
 
         self.threads_list = []
-        self.player=None
+        self.player = None
         self.player_thread=None
-        self.kod_result=''
+        self.kod_result = ''
 
         self.timer = QTimer(self)
         self.timer_action = QTimer(self)
@@ -59,6 +60,8 @@ class MyForm(QMainWindow, Ui_Form):
 
         self.suwak()
         self.laduj_plansze("maps/"+str(self.combo_plansze.currentText()) + ".dat")
+
+
 
     def laduj_plansze(self,nazwa):
         file = open(nazwa)
@@ -97,11 +100,14 @@ class MyForm(QMainWindow, Ui_Form):
 
     def action(self):
         self.ActionEvent.set()
+        if not self.player_thread.isAlive():
+            self.pauza()
+            self.b_pause.setEnabled(False)
         self.l_hp.setText("HP:" + str(self.player.hp))
         for j in range(0, len(self.textBox.toPlainText().splitlines())):
             if j == self.player.licznik:
                 format = QTextBlockFormat()
-                format.setBackground(Qt.yellow)
+                format.setBackground(Qt.cyan)
             else:
                 format = QTextBlockFormat()
                 format.setBackground(Qt.white)
@@ -112,6 +118,7 @@ class MyForm(QMainWindow, Ui_Form):
                     if t.isAlive():
                         t.raiseExc(Exception)
                         time.sleep(0.1)
+        self.konsola.setText(self.player.result)
 
 
     def start(self):
@@ -119,12 +126,13 @@ class MyForm(QMainWindow, Ui_Form):
         self.timer.start(int(60*1000/self.MPM/50))
         self.timer_action.start(int(60*1000/self.MPM))
         self.krokowaEvent.set()
+
         kod = self.textBox.toPlainText()
         for idx,item in enumerate(self.scene.items()):
             if type(item)==player and (self.player_thread == None or not self.player_thread.isAlive()):
                 self.player_thread = ThreadWithExc(name='player_thread',
                      target=item.run,
-                     args=(self.kod_result,kod, self.ActionEvent, self.krokowaEvent,))
+                     args=(kod, self.ActionEvent, self.krokowaEvent,))
 
                 self.threads_list.append(self.player_thread)
             elif type(item)==czolg:
@@ -135,7 +143,7 @@ class MyForm(QMainWindow, Ui_Form):
         self.b_pause.setEnabled(True)
         self.combo_plansze.setEnabled(False)
         self.b_start.setEnabled(False)
-
+        self.textBox.setEnabled(False)
 
         for t in self.threads_list:
             t.daemon = True
@@ -146,6 +154,14 @@ class MyForm(QMainWindow, Ui_Form):
         self.b_pause.setEnabled(False)
         self.b_start.setEnabled(True)
         self.combo_plansze.setEnabled(True)
+        self.konsola.clear()
+        self.textBox.setEnabled(True)
+
+        for j in range(0, len(self.textBox.toPlainText().splitlines())):
+            format = QTextBlockFormat()
+            format.setBackground(Qt.white)
+            self.setLineFormat(j, format)
+
        # self.krokowaEvent.set()
 
 
@@ -220,8 +236,6 @@ class MyForm(QMainWindow, Ui_Form):
 
     # def closeEvent(self, event):
     #     pass
-
-
 
 
 if __name__ == "__main__":
