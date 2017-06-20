@@ -40,6 +40,7 @@ class MyForm(QMainWindow, Ui_Form):
         self.threads_list = []
         self.player=None
         self.player_thread=None
+        self.kod_result=''
 
         self.timer = QTimer(self)
         self.timer_action = QTimer(self)
@@ -123,7 +124,7 @@ class MyForm(QMainWindow, Ui_Form):
             if type(item)==player and (self.player_thread == None or not self.player_thread.isAlive()):
                 self.player_thread = ThreadWithExc(name='player_thread',
                      target=item.run,
-                     args=(kod, self.ActionEvent, self.krokowaEvent,))
+                     args=(self.kod_result,kod, self.ActionEvent, self.krokowaEvent,))
 
                 self.threads_list.append(self.player_thread)
             elif type(item)==czolg:
