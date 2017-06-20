@@ -57,6 +57,59 @@ class czolg(QGraphicsItem):
             self.dir = self.dir - 360
         self.e.clear()
 
+    # def radar(self):
+    #     for i in range(1,20):
+    #         if self.dir == 0:
+    #             xy = (self.xy[0] + i, self.xy[1])
+    #         elif self.dir == 180:
+    #             xy = (self.xy[0] - i, self.xy[1])
+    #         elif self.dir == 90:
+    #             xy = (self.xy[0], self.xy[1] - i)
+    #         elif self.dir == 270:
+    #             xy = (self.xy[0], self.xy[1] + i)
+    #         for k in self.scene.items():
+    #             if k.xy==xy :
+    #                 if type(k)==kafelek:
+    #                     if k.typ!='chodnik':
+    #                         return (i,k.typ)
+    #                 elif type(k)==czolg or type(k)==player:
+    #                     return (i,'czolg')
+
+    def radar(self,dir2='przod'):
+        if(dir2=='lewo'):
+            dir2=self.dir+90
+            if dir2==360:
+                dir2=0
+        elif (dir2 == 'prawo'):
+            dir2 = self.dir - 90
+            if dir2 == -90:
+                dir2 = 270
+        elif (dir2 == 'tyl'):
+            dir2 = self.dir - 180
+            if dir2 == -180:
+                dir2 = 180
+            elif dir2==-90:
+                dir2=270
+        else:
+            dir2=self.dir
+
+        for i in range(1, 20):
+            if dir2 == 0:
+                xy = (self.xy[0] + i, self.xy[1])
+            elif dir2 == 180:
+                xy = (self.xy[0] - i, self.xy[1])
+            elif dir2 == 90:
+                xy = (self.xy[0], self.xy[1] - i)
+            elif dir2 == 270:
+                xy = (self.xy[0], self.xy[1] + i)
+            for k in self.scene.items():
+                if k.xy == xy:
+                    if type(k) == kafelek:
+                        if k.typ != 'chodnik':
+                            return (i, k.typ)
+                    elif type(k) == czolg or type(k) == player:
+                        return (i, 'czolg')
+
     def jedz(self, dist=1):
         for i in range(abs(dist)):
             self.e.wait()
@@ -124,14 +177,16 @@ class czolg(QGraphicsItem):
             while(True):
                 if(self.hp<=0):
                     return 0
-                move=random.randint(1, 4)
-                if move==1:
+                move=random.randint(1, 15)
+                if move<5 and self.radar()[0]>1:
                     self.jedz()
-                elif move==2:
+                elif move==6 and self.radar('lewo')[0]>1:
                     self.obrot_lewo()
-                elif move==3:
+                elif move==7 and self.radar('prawo')[0]>1:
                     self.obrot_prawo()
-                elif move==4:
+                elif move==8 :
+                    self.strzal()
+                elif move>=9 and self.radar()[1]=='czolg':
                     self.strzal()
         elif self.type=='prosto':
             while(True):
@@ -239,25 +294,31 @@ class player(czolg):
     def run(self, kod,e,e_krokowa):
         self.e=e
         self.e_krokowa=e_krokowa
-        kod2=''
+        self.kod2=''
         self.licznik=0;
 
-        for idx, l in enumerate(kod.splitlines()):
+        gracz.jedz=self.jedz
+        gracz.obrot_prawo=self.obrot_prawo
+        gracz.obrot_lewo=self.obrot_lewo
+        gracz.strzal=self.strzal
+        gracz.radar=self.radar
+
+        for idx,l in enumerate(kod.splitlines()):
             wciecia=''
             for a in l:
                 if a==' ' or a=='\t':
                     wciecia+=a
                 else:
                     if a.isalnum() or a=='_' or  a in '()-._,<>[]{};':
-                        kod2 += wciecia + 'self.licznik=' + str(idx) + '\n'
-                        kod2 += wciecia + 'self.e_krokowa.wait()\n' + wciecia + '\n' #'self.e_krokowa.clear()' + '\n'
-                        kod2 += l + '\n'
+                        self.kod2 += wciecia + 'self.licznik=' + str(idx) + '\n'
+                        self.kod2 += wciecia + 'self.e_krokowa.wait()\n' + wciecia + 'self.e_krokowa.clear()' + '\n'
+                        self.kod2 += l + '\n'
                     break
             if wciecia==l:
-                kod2 += ' \n \n \n'
+                self.kod2 += ' \n \n \n \n'
 
 
-        print(kod2)
+        print(self.kod2)
 
         # czolg.strzal = self.strzal
         #
@@ -266,12 +327,14 @@ class player(czolg):
         # czolg.obrot_lewo = self.obrot_lewo
         ##########################################################################
         ##########################################################################
-        if 'class' in kod2:
+        if 'class' in kod:
             return ['Nie wolno definować nowych klas']
-        elif 'import' in kod2:
+        elif 'import' in kod:
             return ['Nie wolno importować']
+        elif 'self' in kod:
+            return ['Użyj klasy gracz zamiast self']
         try:
-            exec(kod2)
+            exec(self.kod2)
             return ['Wykonano kod']
         except:
             formatted_lines = traceback.format_exc().splitlines()
@@ -281,6 +344,17 @@ class player(czolg):
             # except Exception as err:
             #     print(type(err))
             #     print(err)
+
+
+class gracz:
+    def jedz(self):
+        pass
+    def obrot_prawo(self):
+        pass
+    def obrot_lewo(self):
+        pass
+    def strzal(self):
+        pass
 
 
 
