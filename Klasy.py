@@ -242,7 +242,7 @@ class player(czolg):
         kod2=''
         self.licznik=0;
 
-        for idx,l in enumerate(kod.splitlines()):
+        for idx, l in enumerate(kod.splitlines()):
             wciecia=''
             for a in l:
                 if a==' ' or a=='\t':
@@ -250,11 +250,11 @@ class player(czolg):
                 else:
                     if a.isalnum() or a=='_' or  a in '()-._,<>[]{};':
                         kod2 += wciecia + 'self.licznik=' + str(idx) + '\n'
-                        kod2 += wciecia + 'self.e_krokowa.wait()\n' + wciecia + 'self.e_krokowa.clear()' + '\n'
+                        kod2 += wciecia + 'self.e_krokowa.wait()\n' + wciecia + '\n' #'self.e_krokowa.clear()' + '\n'
                         kod2 += l + '\n'
                     break
             if wciecia==l:
-                kod2 += ' \n \n \n \n'
+                kod2 += ' \n \n \n'
 
 
         print(kod2)

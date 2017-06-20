@@ -43,8 +43,9 @@ class MyForm(QMainWindow, Ui_Form):
         self.timer_action.timeout.connect(self.action)
         self.b_start.clicked.connect(self.start)
         self.b_reset.clicked.connect(self.reset)
+        self.horizontalSlider.valueChanged.connect(self.suwak)
 
-        self.laduj_plansze('plansza1.txt')
+        self.laduj_plansze('plansza1.dat')
 
     def laduj_plansze(self,nazwa):
         file = open(nazwa)
@@ -86,7 +87,7 @@ class MyForm(QMainWindow, Ui_Form):
     def start(self):
         self.timer.start(int(60*1000/self.MPM/20))
         self.timer_action.start(int(60*1000/self.MPM))
-
+        self.krokowaEvent.set()
         kod = self.textBox.toPlainText()
         for idx,item in enumerate(self.scene.items()):
             if type(item)==player:
@@ -113,20 +114,20 @@ class MyForm(QMainWindow, Ui_Form):
 
     def reset(self):
 
-        self.krokowaEvent.set()
+       # self.krokowaEvent.set()
 
 
 
-        # DZIALAJACY RESET
-        # for t in self.threads_list:
-        #     if t.isAlive():
-        #         t.raiseExc(Exception)
-        #         time.sleep(0.1)
-        # self.threads_list=[]
-        # self.timer.stop()
-        # self.timer_action.stop()
-        # self.scene.clear()
-        # self.laduj_plansze('plansza1.txt')
+        #DZIALAJACY RESET
+        for t in self.threads_list:
+            if t.isAlive():
+                t.raiseExc(Exception)
+                time.sleep(0.1)
+        self.threads_list=[]
+        self.timer.stop()
+        self.timer_action.stop()
+        self.scene.clear()
+        self.laduj_plansze('plansza1.txt')
 
 
 
@@ -160,6 +161,11 @@ class MyForm(QMainWindow, Ui_Form):
         # self.scene.addItem(pocisk())
         self.scene.update()
 
+    def suwak(self):
+        self.MPM = self.horizontalSlider.value()
+        self.l_mpm.setText(str(self.horizontalSlider.value()))
+        self.timer.setInterval(int(60*1000/self.MPM/20))
+        self.timer_action.setInterval(int(60*1000/self.MPM))
 
 
 
