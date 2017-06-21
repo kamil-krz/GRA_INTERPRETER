@@ -34,7 +34,9 @@ class MyForm(QMainWindow, Ui_Form):
         self.threads_list = []
         self.player_thread=None
         self.kod_result = ''
-        self.aktualna_linia=0;
+        self.aktualna_linia=0
+        self.map=map()
+        self.time=0
 
         self.timer = QTimer(self)
         self.timer_action = QTimer(self)
@@ -50,13 +52,36 @@ class MyForm(QMainWindow, Ui_Form):
         self.b_reset.clicked.connect(self.reset)
         self.horizontalSlider.valueChanged.connect(self.suwak)
         self.combo_plansze.currentIndexChanged.connect(self.reset)
+        self.combo_plansze.currentIndexChanged.connect(lambda :self.help(self.map.getHelp()))
         self.b_help.clicked.connect(self.help)
         self.b_pause.clicked.connect(self.pauza)
 
         self.suwak()
         self.map_init('plansza_0')
 
+    def sprawdz_cele(self):
+        for cel in self.map.cele:
+            wygrana=True
+            for idx,c in enumerate(cel):
+                if c=='X' and self.player.xy!=self.map.target:
+                    wygrana=False
+                elif c=='K':
+                    liczba_wrogow=0
+                    for i in self.map.czolgi:
+                        if i.hp>0:
+                            liczba_wrogow+=1
+                    if liczba_wrogow!=0:
+                        wygrana=False
+                elif c=='S':
+                    if self.time<int(cel[idx+1:idx+4]):
+                        wygrana=False
+            if wygrana:
+                self.wygrana()
 
+    def wygrana(self):
+        self.konsola.append('\nWYGRALES\n')
+        self.pauza()
+        self.b_start.setEnabled(False)
 
 
     def map_init(self,nazwa):
@@ -64,10 +89,13 @@ class MyForm(QMainWindow, Ui_Form):
         self.scene=self.map.getScene()
         self.player=self.map.player
         self.plansza.setScene(self.scene)
+        print(self.map.cele)
 
 
 
     def action(self):
+        self.time+=1
+
         self.ActionEvent.set()
         if  not self.player_thread==None and not self.player_thread.isAlive() :
             self.pauza()
@@ -84,6 +112,7 @@ class MyForm(QMainWindow, Ui_Form):
 
 
     def start(self):
+        self.time=0
         self.suwak()
         self.timer.start(int(60*1000/self.MPM/50))
         self.timer_action.start(int(60*1000/self.MPM))
@@ -159,6 +188,7 @@ class MyForm(QMainWindow, Ui_Form):
     def latanie(self):
         self.krokowaEvent.set()
         self.malujLinie()
+        self.sprawdz_cele()
         for i in self.scene.items():
             if type(i) == pocisk:
                 i.lot()
@@ -188,12 +218,10 @@ class MyForm(QMainWindow, Ui_Form):
         self.timer_action.setInterval(int(60*1000/self.MPM))
 
 
-    def help(self):
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Information)
-
-        msg.setText("Dostępne polecenia klasy gracz: ")
-        msg.setInformativeText("gracz.jedz(liczba_pol) - jazda o liczbę pol - domyślnie +1 \n \n"
+    def help(self,text=''):
+        if not text:
+            text=str("Dostępne polecenia klasy gracz: \n \n"
+                               "gracz.jedz(liczba_pol) - jazda o liczbę pol - domyślnie +1 \n \n"
                                "gracz.obrot_prawo() - obrot zgodnie z ruchem wskazowek zegara \n \n"
                                "gracz.obrot_lewo() - obrot przeciwnie do ruchu wskazowek zegara \n \n"
                                "gracz.strzal() - wystrzelenie pocisku \n \n"
@@ -204,6 +232,11 @@ class MyForm(QMainWindow, Ui_Form):
                                "sciana_zn - ściana zniszczalna \n"
                                "czolg - przeciwnik \n"
                                "pocisk \n")
+        elif not ' ' in text:
+            return
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setInformativeText(text)
         msg.setWindowTitle("HELP")
         msg.setStandardButtons(QMessageBox.Close)
 

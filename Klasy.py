@@ -129,7 +129,7 @@ class czolg(QGraphicsItem):
                     if (type(i) == czolg or type(i) == player)and i!=self:
                         xy = self.xy
                         break
-                    elif type(i)==kafelek and i.typ!='chodnik':
+                    elif type(i)==kafelek and (i.typ!='chodnik' and i.typ!='target'):
                         xy = self.xy
                         break
 
@@ -266,7 +266,7 @@ class pocisk(QGraphicsItem):
             xy=self.xy
         for i in self.scene.items():
             if i.xy==((int(xy[0]/25)),int(xy[1]/25)):
-                if type(i)==kafelek and i.typ=='chodnik':
+                if type(i)==kafelek and (i.typ=='chodnik' or i.typ=='target'):
                     self.xy = xy
 
                 elif type(i)==kafelek and i.typ=='sciana_zn':
@@ -321,11 +321,12 @@ class player(czolg):
         gracz.strzal=self.strzal
         gracz.radar=self.radar
 
-        # import pygame
-        # pygame.init()
-        # pygame.joystick.init()
-        # js = pygame.joystick.Joystick(0)
-        # js.init()
+
+        import pygame
+        pygame.init()
+        pygame.joystick.init()
+        js = pygame.joystick.Joystick(0)
+        js.init()
 
 
 
@@ -408,6 +409,9 @@ class map:
 
         self.czolgi = []
         self.player=None
+        self.cele=[]
+        self.help=''
+        self.target=(-1,-1)
 
         self.obrazki = {'player': QImage("graphics/player.jpg"), 'czolg': QImage("graphics/czolg.jpg"),
                         'sciana_zniszczalna': QImage("graphics/sciana_zniszczalna.jpg"),
@@ -423,15 +427,24 @@ class map:
     def laduj_plansze(self, nazwa):
         file = open(nazwa)
         for i, line in enumerate(file):
-            if i >= 20:
-                break
-            for j in range(0, 20):
-                if line[j] == ' ':
-                    self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
-                elif line[j] == '#':
-                    self.scene.addItem(kafelek(xy=(j, i), typ='sciana_nzn', obrazki=self.obrazki))
-                elif line[j] == '*':
-                    self.scene.addItem(kafelek(xy=(j, i), typ='sciana_zn', obrazki=self.obrazki))
+            if i < 20:
+
+                for j in range(0, 20):
+                    if line[j] == ' ':
+                        self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
+                    elif line[j] == '#':
+                        self.scene.addItem(kafelek(xy=(j, i), typ='sciana_nzn', obrazki=self.obrazki))
+                    elif line[j] == '*':
+                        self.scene.addItem(kafelek(xy=(j, i), typ='sciana_zn', obrazki=self.obrazki))
+                    elif line[j] == 'x':
+                        self.target=(j,i)
+                        self.scene.addItem(kafelek(xy=(j, i), typ='target', obrazki=self.obrazki))
+            elif i==20 and 'cele' in line:
+                line=line.replace('\n','')
+                self.cele=line.split(' ')[1:]
+            elif i>21:
+                self.help+=line+'\n'
+
 
     def laduj_czolgi(self, nazwa):
         file = open(nazwa)
@@ -447,5 +460,7 @@ class map:
                 self.scene.addItem(cz)
     def getScene(self):
         return self.scene
+    def getHelp(self):
+        return self.help
 
 
