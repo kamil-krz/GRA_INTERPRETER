@@ -168,9 +168,6 @@ class czolg(QGraphicsItem):
                 elif self.radar('prawo')[1]=='pocisk':
                     self.jedz()
                     continue
-                elif self.radar('prosto')[1]=='pocisk':
-                    self.obrot_lewo()
-                    continue
                 elif self.radar('tyl')[1]=='pocisk':
                     self.obrot_lewo()
                     continue
@@ -285,13 +282,12 @@ class pocisk(QGraphicsItem):
 
 
 class player(czolg):
-    def __init__(self, xy=(-1, -1), dir=180, obrazki = None,delay=700,scene=None):
+    def __init__(self, xy=(-1, -1), dir=180, obrazki = None,scene=None):
         QGraphicsItem.__init__(self)
         self.licznik = 0
         self.xy = xy
         self.dir = dir
         self.obrazek = obrazki['player']
-        self.delay=delay
         self.hp=3
         self.scene = scene
         self.result=''
@@ -304,17 +300,26 @@ class player(czolg):
 
 
     def run(self, kod,e,e_krokowa):
-        self.add_result('Uruchomiono kod')
+        self.add_result('Uruchomiono kod\n')
         self.e=e
         self.e_krokowa=e_krokowa
         self.kod2=''
         self.licznik=0;
+
+
 
         gracz.jedz=self.jedz
         gracz.obrot_prawo=self.obrot_prawo
         gracz.obrot_lewo=self.obrot_lewo
         gracz.strzal=self.strzal
         gracz.radar=self.radar
+
+        # import pygame
+        # pygame.init()
+        # pygame.joystick.init()
+        # js = pygame.joystick.Joystick(0)
+        # js.init()
+
 
 
         for idx,l in enumerate(kod.splitlines()):
@@ -323,24 +328,23 @@ class player(czolg):
                 if a==' ' or a=='\t':
                     wciecia+=a
                 else:
-                    if a.isalnum() or a=='_' or  a in '()-._,<>[]{};':
+                    if 'else ' in l:
+                        self.kod2 += ' \n \n \n '+l+'\n'
+                    elif 'elif ' in l:
+                        self.kod2 += ' \n \n \n'+l+'\n'
+
+                    elif a.isalnum() or a=='_' or  a in '()-._,<>[]{};':
                         self.kod2 += wciecia + 'self.licznik=' + str(idx) + '\n'
-                        self.kod2 += wciecia + 'self.e_krokowa.wait()\n' #+ wciecia + 'self.e_krokowa.clear()' + '\n'
+                        self.kod2 += wciecia + 'self.e_krokowa.wait()\n' + wciecia + 'self.e_krokowa.clear()' + '\n'
                         self.kod2 += l + '\n'
                     break
             if wciecia==l:
-                self.kod2 += ' \n \n \n'
+                self.kod2 += ' \n \n \n \n'
 
 
-        # print(self.kod2)
+        # self.add_result(self.kod2)
 
-        # czolg.strzal = self.strzal
-        #
-        # czolg.jedz = self.jedz
-        # czolg.obrot_prawo = self.obrot_prawo
-        # czolg.obrot_lewo = self.obrot_lewo
-        ##########################################################################
-        ##########################################################################
+
         if 'class ' in kod:
             self.add_result('\nNie wolno definować nowych klas')
             return
@@ -366,9 +370,7 @@ class player(czolg):
             detail = err.args[0]
             cl, exc, tb = sys.exc_info()
             line_number = traceback.extract_tb(tb)[-1][1]
-        else:
-            return
-        raise self.add_result("%s at line %d of %s: %s" % (error_class, math.ceil(line_number/3), 'user code', detail))
+        raise self.add_result("%s at line %d of %s: %s" % (error_class, math.ceil(line_number/4), 'user code', detail))
 
         return
 
@@ -382,6 +384,8 @@ class gracz:
     def obrot_lewo(self):
         pass
     def strzal(self):
+        pass
+    def radar(self):
         pass
 
 

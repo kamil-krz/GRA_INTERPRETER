@@ -1,6 +1,3 @@
-import threading
-
-from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QImage, QTextBlockFormat, QTextCursor, QTextFormat, QPainter
 from PyQt5.QtCore import QRectF, QTimer, Qt, QRect
 from PyQt5.QtWidgets import *
@@ -8,15 +5,15 @@ from Klasy import *
 from ThreadWithExc import *
 from gui_nasze import Ui_Form
 import os
-import Klasy_uzytkowe
 
 
 
-sys._excepthook = sys.excepthook
-def exception_hook(exctype, value, traceback):
-    sys._excepthook(exctype, value, traceback)
-    sys.exit(1)
-sys.excepthook = exception_hook
+
+# sys._excepthook = sys.excepthook
+# def exception_hook(exctype, value, traceback):
+#     sys._excepthook(exctype, value, traceback)
+#     sys.exit(1)
+# sys.excepthook = exception_hook
 
 
 class MyForm(QMainWindow, Ui_Form):
@@ -42,6 +39,7 @@ class MyForm(QMainWindow, Ui_Form):
         self.player = None
         self.player_thread=None
         self.kod_result = ''
+        self.aktualna_linia=0;
 
         self.timer = QTimer(self)
         self.timer_action = QTimer(self)
@@ -71,24 +69,24 @@ class MyForm(QMainWindow, Ui_Form):
             for j in range(0, 20):
                 if line[j] == ' ':
                     self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
-                if line[j] == '#':
+                elif line[j] == '#':
                     self.scene.addItem(kafelek(xy=(j, i), typ='sciana_nzn', obrazki=self.obrazki))
-                if line[j] == '*':
+                elif line[j] == '*':
                     self.scene.addItem(kafelek(xy=(j, i), typ='sciana_zn', obrazki=self.obrazki))
-                if line[j] == 'P':
+                elif line[j] == 'P':
                     self.player=player(xy=(j, i), obrazki=self.obrazki, scene=self.scene)
                     self.scene.addItem(self.player)
                     self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
-                if line[j] == '<':
+                elif line[j] == '<':
                     self.scene.addItem(czolg(xy=(j, i), dir=180, obrazki=self.obrazki, type='random', scene=self.scene))
                     self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
-                if line[j] == '>':
+                elif line[j] == '>':
                     self.scene.addItem(czolg(xy=(j, i), dir=0, obrazki=self.obrazki, type='random', scene=self.scene))
                     self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
-                if line[j] == '^':
+                elif line[j] == '^':
                     self.scene.addItem(czolg(xy=(j, i), dir=90, obrazki=self.obrazki, type='random', scene=self.scene))
                     self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
-                if line[j] == 'v':
+                elif line[j] == 'v':
                     self.scene.addItem(czolg(xy=(j, i), dir=270, obrazki=self.obrazki, type='prosto', scene=self.scene))
                     self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
 
@@ -100,25 +98,18 @@ class MyForm(QMainWindow, Ui_Form):
 
     def action(self):
         self.ActionEvent.set()
-        if not self.player_thread.isAlive():
+        if  not self.player_thread==None and not self.player_thread.isAlive() :
             self.pauza()
             self.b_pause.setEnabled(False)
+            self.b_start.setEnabled(False)
         self.l_hp.setText("HP:" + str(self.player.hp))
-        for j in range(0, len(self.textBox.toPlainText().splitlines())):
-            if j == self.player.licznik:
-                format = QTextBlockFormat()
-                format.setBackground(Qt.cyan)
-            else:
-                format = QTextBlockFormat()
-                format.setBackground(Qt.white)
-            self.setLineFormat(j, format)
+
         if self.player.hp <= 0:
-            for t in self.threads_list:
-                if t.getName() == 'player_thread':
-                    if t.isAlive():
-                        t.raiseExc(Exception)
-                        time.sleep(0.1)
+                    if self.player_thread.isAlive():
+                        self.player_thread.raiseExc(Exception)
+
         self.konsola.setText(self.player.result)
+
 
 
     def start(self):
@@ -128,6 +119,7 @@ class MyForm(QMainWindow, Ui_Form):
         self.krokowaEvent.set()
 
         kod = self.textBox.toPlainText()
+
         for idx,item in enumerate(self.scene.items()):
             if type(item)==player and (self.player_thread == None or not self.player_thread.isAlive()):
                 self.player_thread = ThreadWithExc(name='player_thread',
@@ -162,7 +154,6 @@ class MyForm(QMainWindow, Ui_Form):
             format.setBackground(Qt.white)
             self.setLineFormat(j, format)
 
-       # self.krokowaEvent.set()
 
 
 
@@ -181,11 +172,9 @@ class MyForm(QMainWindow, Ui_Form):
         for t in self.threads_list:
             if t.isAlive() and t != self.player_thread:
                 t.raiseExc(Exception)
-                time.sleep(0.1)
         self.threads_list=[]
         self.timer_action.stop()
         self.krokowaEvent.clear()
-        time.sleep(int(60*1000/self.MPM/20)/100)
         self.timer.stop()
         self.b_start.setEnabled(True)
         self.b_pause.setEnabled(False)
@@ -193,12 +182,23 @@ class MyForm(QMainWindow, Ui_Form):
 
 
     def latanie(self):
+        self.krokowaEvent.set()
+        self.malujLinie()
         for i in self.scene.items():
             if type(i) == pocisk:
                 i.lot()
 
-        # self.scene.addItem(pocisk())
         self.scene.update()
+
+    def malujLinie(self):
+        format = QTextBlockFormat()
+        format.setBackground(Qt.white)
+        self.setLineFormat(self.aktualna_linia, format)
+        self.aktualna_linia = self.player.licznik
+        format = QTextBlockFormat()
+        format.setBackground(Qt.cyan)
+        self.setLineFormat(self.aktualna_linia, format)
+
 
     def setLineFormat(self, lineNumber, format):
         cursor = QTextCursor(self.textBox.document().findBlockByNumber(lineNumber))
@@ -226,7 +226,8 @@ class MyForm(QMainWindow, Ui_Form):
                                "Dostępne typy przeszkód: \n"
                                "sciana_nzn - ściana nieziszczalna \n"
                                "sciana_zn - ściana zniszczalna \n"
-                               "czolg - przeciwnik \n")
+                               "czolg - przeciwnik \n"
+                               "pocisk \n")
         msg.setWindowTitle("HELP")
         msg.setStandardButtons(QMessageBox.Close)
 
@@ -234,8 +235,6 @@ class MyForm(QMainWindow, Ui_Form):
 
 
 
-    # def closeEvent(self, event):
-    #     pass
 
 
 if __name__ == "__main__":
