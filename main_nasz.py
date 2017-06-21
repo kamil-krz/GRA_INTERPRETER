@@ -38,6 +38,7 @@ class MyForm(QMainWindow, Ui_Form):
         self.map=map()
         self.time=0
 
+
         self.timer = QTimer(self)
         self.timer_action = QTimer(self)
 
@@ -58,6 +59,10 @@ class MyForm(QMainWindow, Ui_Form):
 
         self.suwak()
         self.map_init('plansza_0')
+        licz = 1
+        for i in range(self.combo_plansze.count()-2):
+            licz += 1
+            self.combo_plansze.model().item(licz).setEnabled(False)
 
     def sprawdz_cele(self):
         for cel in self.map.cele:
@@ -82,6 +87,11 @@ class MyForm(QMainWindow, Ui_Form):
         self.konsola.append('\nWYGRALES\n')
         self.pauza()
         self.b_start.setEnabled(False)
+        self.plansza_unlock(self.combo_plansze.currentIndex()+1)
+
+    def plansza_unlock(self,licz):
+         if licz<self.combo_plansze.count():
+            self.combo_plansze.model().item(licz).setEnabled(True)
 
 
     def map_init(self,nazwa):
@@ -146,7 +156,6 @@ class MyForm(QMainWindow, Ui_Form):
 
 
     def reset(self):
-
         self.b_pause.setEnabled(False)
         self.b_start.setEnabled(True)
         self.combo_plansze.setEnabled(True)
