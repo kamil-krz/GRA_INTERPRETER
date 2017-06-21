@@ -439,7 +439,7 @@ class map:
             line=line.replace('\n','')
             line = line.split(' ')
             if line[0] == 'player':
-                self.player = player(xy=(int(line[2]), int(line[1])), obrazki=self.obrazki, scene=self.scene)
+                self.player = player(xy=(int(line[2]), int(line[1])),dir=int(line[3]), obrazki=self.obrazki, scene=self.scene)
                 self.scene.addItem(self.player)
             elif line[0] == 'czolg':
                 cz = czolg(xy=(int(line[2]), int(line[1])), dir=int(line[3]), obrazki=self.obrazki, type=line[4], scene=self.scene)
