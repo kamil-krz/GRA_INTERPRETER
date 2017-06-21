@@ -349,7 +349,7 @@ class player(czolg):
                 self.kod2 += ' \n \n \n \n'
 
 
-        self.add_result(self.kod2)
+        # self.add_result(self.kod2)
 
 
         if 'class ' in kod:
@@ -437,9 +437,7 @@ class map:
         file = open(nazwa)
         for i, line in enumerate(file):
             line=line.replace('\n','')
-            print(line)
             line = line.split(' ')
-            print(line)
             if line[0] == 'player':
                 self.player = player(xy=(int(line[2]), int(line[1])), obrazki=self.obrazki, scene=self.scene)
                 self.scene.addItem(self.player)
