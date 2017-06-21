@@ -4,6 +4,7 @@ from PyQt5.QtCore import *
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QTextEdit
 
+import numpy as np
 
 
 
