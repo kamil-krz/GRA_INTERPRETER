@@ -22,30 +22,27 @@ class MyForm(QMainWindow, Ui_Form):
         QMainWindow.__init__(self)
         Ui_Form.__init__(self)
         self.setupUi(self)
-        self.obrazki = {'player': QImage("graphics/player.jpg"), 'czolg': QImage("graphics/czolg.jpg"), 'sciana_zniszczalna': QImage("graphics/sciana_zniszczalna.jpg"), 'sciana_niezniszczalna': QImage("graphics/sciana_niezniszczalna.jpg"), }
 
         for root, dirs, files in os.walk('maps'):
             for i in files:
-                if ".dat" in i:
-                    i = i.replace(".dat","")
+                if ".map" in i:
+                    i = i.replace(".map","")
                     self.combo_plansze.addItem(i)
-        self.scene = QGraphicsScene()
-        self.scene.setItemIndexMethod(QGraphicsScene.NoIndex)
-
 
         self.MPM=10        #moves per minute
 
         self.threads_list = []
-        self.player = None
         self.player_thread=None
         self.kod_result = ''
         self.aktualna_linia=0;
 
         self.timer = QTimer(self)
         self.timer_action = QTimer(self)
-        self.plansza.setScene(self.scene)
+
         self.ActionEvent = threading.Event()
         self.krokowaEvent = threading.Event()
+        self.exitEvent = threading.Event()
+        self.exitEvent.clear()
 
         self.timer.timeout.connect(self.latanie)
         self.timer_action.timeout.connect(self.action)
@@ -57,42 +54,16 @@ class MyForm(QMainWindow, Ui_Form):
         self.b_pause.clicked.connect(self.pauza)
 
         self.suwak()
-        self.laduj_plansze("maps/"+str(self.combo_plansze.currentText()) + ".dat")
+        self.map_init('plansza_0')
 
 
 
-    def laduj_plansze(self,nazwa):
-        file = open(nazwa)
-        for i, line in enumerate(file):
-            if i>=20:
-                break
-            for j in range(0, 20):
-                if line[j] == ' ':
-                    self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
-                elif line[j] == '#':
-                    self.scene.addItem(kafelek(xy=(j, i), typ='sciana_nzn', obrazki=self.obrazki))
-                elif line[j] == '*':
-                    self.scene.addItem(kafelek(xy=(j, i), typ='sciana_zn', obrazki=self.obrazki))
-                elif line[j] == 'P':
-                    self.player=player(xy=(j, i), obrazki=self.obrazki, scene=self.scene)
-                    self.scene.addItem(self.player)
-                    self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
-                elif line[j] == '<':
-                    self.scene.addItem(czolg(xy=(j, i), dir=180, obrazki=self.obrazki, type='random', scene=self.scene))
-                    self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
-                elif line[j] == '>':
-                    self.scene.addItem(czolg(xy=(j, i), dir=0, obrazki=self.obrazki, type='random', scene=self.scene))
-                    self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
-                elif line[j] == '^':
-                    self.scene.addItem(czolg(xy=(j, i), dir=90, obrazki=self.obrazki, type='random', scene=self.scene))
-                    self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
-                elif line[j] == 'v':
-                    self.scene.addItem(czolg(xy=(j, i), dir=270, obrazki=self.obrazki, type='prosto', scene=self.scene))
-                    self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
 
-        for i in self.scene.items():
-            if type(i) != kafelek:
-                i.setZValue(0.5)
+    def map_init(self,nazwa):
+        self.map = map(nazwa=nazwa)
+        self.scene=self.map.getScene()
+        self.player=self.map.player
+        self.plansza.setScene(self.scene)
 
 
 
@@ -117,6 +88,8 @@ class MyForm(QMainWindow, Ui_Form):
         self.timer.start(int(60*1000/self.MPM/50))
         self.timer_action.start(int(60*1000/self.MPM))
         self.krokowaEvent.set()
+        self.exitEvent.set()
+
 
         kod = self.textBox.toPlainText()
 
@@ -124,7 +97,7 @@ class MyForm(QMainWindow, Ui_Form):
             if type(item)==player and (self.player_thread == None or not self.player_thread.isAlive()):
                 self.player_thread = ThreadWithExc(name='player_thread',
                      target=item.run,
-                     args=(kod, self.ActionEvent, self.krokowaEvent,))
+                     args=(kod, self.ActionEvent, self.krokowaEvent,self.exitEvent,))
 
                 self.threads_list.append(self.player_thread)
             elif type(item)==czolg:
@@ -132,6 +105,7 @@ class MyForm(QMainWindow, Ui_Form):
                                      target=item.go_AI,
                                      args=(self.ActionEvent,))
                 self.threads_list.append(t)
+
         self.b_pause.setEnabled(True)
         self.combo_plansze.setEnabled(False)
         self.b_start.setEnabled(False)
@@ -143,10 +117,11 @@ class MyForm(QMainWindow, Ui_Form):
 
 
     def reset(self):
+
         self.b_pause.setEnabled(False)
         self.b_start.setEnabled(True)
         self.combo_plansze.setEnabled(True)
-        self.konsola.clear()
+        # self.konsola.clear()
         self.textBox.setEnabled(True)
 
         for j in range(0, len(self.textBox.toPlainText().splitlines())):
@@ -156,17 +131,17 @@ class MyForm(QMainWindow, Ui_Form):
 
 
 
-
        # DZIALAJACY RESET
         for t in self.threads_list:
-            if t.isAlive():
-                t.raiseExc(Exception)
+            if t.is_alive():
+                t.raiseExc(SystemExit)
                 time.sleep(0.1)
+                pass
         self.threads_list=[]
+        self.player_thread=None
         self.timer.stop()
         self.timer_action.stop()
-        self.scene.clear()
-        self.laduj_plansze("maps/"+str(self.combo_plansze.currentText()) + ".dat")
+        self.map_init(str(self.combo_plansze.currentText()))
 
     def pauza(self):
         for t in self.threads_list:
@@ -206,6 +181,7 @@ class MyForm(QMainWindow, Ui_Form):
 
 
     def suwak(self):
+        self.exitEvent.clear()
         self.MPM = self.horizontalSlider.value()
         self.l_mpm.setText(str(self.horizontalSlider.value()))
         self.timer.setInterval(int(60*1000/self.MPM/50))

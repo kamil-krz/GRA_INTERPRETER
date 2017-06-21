@@ -9,7 +9,9 @@ from sys import exc_info
 import traceback
 import time
 import random
+import sys
 
+from PyQt5.QtWidgets import QGraphicsScene
 
 
 class czolg(QGraphicsItem):
@@ -227,6 +229,10 @@ class kafelek(QGraphicsItem):
             painter.drawImage(rect, self.obrazki['sciana_zniszczalna'])
         elif self.typ == 'sciana_nzn':
             painter.drawImage(rect, self.obrazki['sciana_niezniszczalna'])
+        elif self.typ == 'target':
+            colour = QBrush(QColor('red'))
+            painter.setBrush(colour)
+            painter.drawRect(x * 25, y * 25, 25, 25)
 
 
 
@@ -299,10 +305,11 @@ class player(czolg):
             self.result+=' '
 
 
-    def run(self, kod,e,e_krokowa):
+    def run(self, kod,e,e_krokowa,e_exit):
         self.add_result('Uruchomiono kod\n')
         self.e=e
         self.e_krokowa=e_krokowa
+        self.e_exit=e_exit
         self.kod2=''
         self.licznik=0;
 
@@ -335,14 +342,14 @@ class player(czolg):
 
                     elif a.isalnum() or a=='_' or  a in '()-._,<>[]{};':
                         self.kod2 += wciecia + 'self.licznik=' + str(idx) + '\n'
-                        self.kod2 += wciecia + 'self.e_krokowa.wait()\n' + wciecia + 'self.e_krokowa.clear()' + '\n'
+                        self.kod2 +=  wciecia + 'if not self.e_exit.is_set(): sys.exit(0)' + '\n'+wciecia + 'self.e_krokowa.wait()\n' + wciecia + 'self.e_krokowa.clear()' + '\n'
                         self.kod2 += l + '\n'
                     break
             if wciecia==l:
                 self.kod2 += ' \n \n \n \n'
 
 
-        # self.add_result(self.kod2)
+        self.add_result(self.kod2)
 
 
         if 'class ' in kod:
@@ -365,12 +372,17 @@ class player(czolg):
             error_class = err.__class__.__name__
             detail = err.args[0]
             line_number = err.lineno
+            self.add_result("%s at line %d of %s: %s" % (error_class, math.ceil(line_number / 4), 'user code', detail))
+            return
         except Exception as err:
             error_class = err.__class__.__name__
             detail = err.args[0]
             cl, exc, tb = sys.exc_info()
             line_number = traceback.extract_tb(tb)[-1][1]
-        raise self.add_result("%s at line %d of %s: %s" % (error_class, math.ceil(line_number/4), 'user code', detail))
+            self.add_result("%s at line %d of %s: %s" % (error_class, math.ceil(line_number/4), 'user code', detail))
+
+        except SystemExit as e:
+            self.add_result("Przerwano dzialanie kodu")
 
         return
 
@@ -389,7 +401,53 @@ class gracz:
         pass
 
 
+class map:
+    def __init__(self, nazwa='plansza_0'):
+        self.scene = QGraphicsScene()
+        self.scene.setItemIndexMethod(QGraphicsScene.NoIndex)
+
+        self.czolgi = []
+        self.player=None
+
+        self.obrazki = {'player': QImage("graphics/player.jpg"), 'czolg': QImage("graphics/czolg.jpg"),
+                        'sciana_zniszczalna': QImage("graphics/sciana_zniszczalna.jpg"),
+                        'sciana_niezniszczalna': QImage("graphics/sciana_niezniszczalna.jpg"), }
+
+        self.laduj_plansze('maps/' + nazwa + '.map')
+        self.laduj_czolgi('maps/' + nazwa + '.tanks')
+        # for i in self.scene.items():
+        #     if type(i) != kafelek:
+        #         i.setZValue(0.5)
 
 
+    def laduj_plansze(self, nazwa):
+        file = open(nazwa)
+        for i, line in enumerate(file):
+            if i >= 20:
+                break
+            for j in range(0, 20):
+                if line[j] == ' ':
+                    self.scene.addItem(kafelek(xy=(j, i), typ='chodnik', obrazki=self.obrazki))
+                elif line[j] == '#':
+                    self.scene.addItem(kafelek(xy=(j, i), typ='sciana_nzn', obrazki=self.obrazki))
+                elif line[j] == '*':
+                    self.scene.addItem(kafelek(xy=(j, i), typ='sciana_zn', obrazki=self.obrazki))
+
+    def laduj_czolgi(self, nazwa):
+        file = open(nazwa)
+        for i, line in enumerate(file):
+            line=line.replace('\n','')
+            print(line)
+            line = line.split(' ')
+            print(line)
+            if line[0] == 'player':
+                self.player = player(xy=(int(line[2]), int(line[1])), obrazki=self.obrazki, scene=self.scene)
+                self.scene.addItem(self.player)
+            elif line[0] == 'czolg':
+                cz = czolg(xy=(int(line[2]), int(line[1])), dir=int(line[3]), obrazki=self.obrazki, type=line[4], scene=self.scene)
+                self.czolgi.append(cz)
+                self.scene.addItem(cz)
+    def getScene(self):
+        return self.scene
 
 
